@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<body style="background-color:rgb(231, 255, 251);"></body>
+<html> lang="en">
+    <head>
+        <title> GST & PST calculator</title>
+        <script>
+            function averaging(){
+                let num1 = parseFloat(document.querySelector('#first_val').value);
+                let num2 = parseFloat(document.querySelector('#second_val').value);
+                document.querySelector('#average').innerHTML = (num1 + num2) /2;
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelector('#first_val').onkeyup = averaging;
+                ocument.querySelector('#second_val').onkeyup = averaging;
+            });
+        </script>
+    </head>
+    <body>
+        <p>We love math lets calculate the average</p>
+        <label>Your first number:</label>
+        <input type="text" id="first_val" value="0">
+        <br>
+        <label>Your seocnd number:</label>
+        <input type="text" id="second_val" value="0"> 
+        <br>  
+    </body>
+</html>
+
+
+
+
+
+
+
+        
