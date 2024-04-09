@@ -1,0 +1,19 @@
+for (const postId in data) {
+    const post = data[postId];
+    const timestamp = post.timestamp;
+    const time = new Date(timestamp).toLocaleString("en-US", {timeZone: "America/Vancouver"});
+
+    if (post.category === 'priority') {
+        dataContainer.innerHTML += `
+            <p>${time}</p>
+            <p><strong>${post.username}</strong>: ${post.message}</p><br>
+        `;
+    } else if (post.category === 'announcement') {
+        latestAnnouncement = post;
+    } else {
+        dataContainer.innerHTML += `
+            <p>${time}</p>
+            <p><u><strong>${post.username}</strong></u>: ${post.message}</p><br>
+        `;
+    }
+}

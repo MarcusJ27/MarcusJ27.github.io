@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    #score {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+<h1>Math Game</h1>
+<div id="score">Score: <span id="score-value">0</span></div>
+<div id="question"></div>
+<input type="text" id="answer" placeholder="Enter your answer">
+<button onclick="checkAnswer()">Submit</button>
+
+<script>
+    let score = 0;
+
+    function generateQuestion() {
+        const num1 = Math.floor(Math.random() * 10) + 1;
+        const num2 = Math.floor(Math.random() * 10) + 1;
+        const operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+        let result;
+        switch (operator) {
+            case '+':
+                result = num1 + num2;
+                break;
+            case '-':
+                result = num1 - num2;
+                break;
+            case '*':
+                result = num1 * num2;
+                break;
+            case '/':
+                result = num1 / num2;
+                break;
+        }
+        return `${num1} ${operator} ${num2} = ?`;
+    }
+
+    function checkAnswer() {
+        const answerInput = document.getElementById('answer');
+        const answer = parseFloat(answerInput.value);
+        const questionDiv = document.getElementById('question');
+        const scoreSpan = document.getElementById('score-value');
+        const question = questionDiv.textContent.split('=')[0].trim();
+        const result = eval(question);
+        
+        if (!isNaN(answer)) {
+            if (answer === result) {
+                score++;
+                scoreSpan.textContent = score;
+                if (score >= 10) {
+                    alert('Congratulations! You won!');
+                    score = 0;
+                    scoreSpan.textContent = score;
+                } else {
+                    questionDiv.textContent = generateQuestion();
+                    answerInput.value = '';
+                }
+            } else {
+                if (score > 0) {
+                    score--;
+                    scoreSpan.textContent = score;
+                }
+                alert('Incorrect answer! Try again.');
+            }
+        } else {
+            alert('Please enter a valid number.');
+        }
+    }
+
+    window.onload = function() {
+        const questionDiv = document.getElementById('question');
+        questionDiv.textContent = generateQuestion();
+    };
+</script>
+</body>
+</html>
