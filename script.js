@@ -1,62 +1,126 @@
-async function fetchWeather(city) {
-    try {
-        const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=49a45a443b2146b9ba705034240202&q=${city}&aqi=no`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+let cartItems = []; 
 
-        // Gather API info
-        const location = data.location.name + ', ' + data.location.region + ', ' + data.location.country;
-        const temperature = data.current.temp_c + '°C';
-        const condition = data.current.condition.text;
-
-        // Display current weather information on page
-        const weatherContainer = document.getElementById('weather-container');
-        weatherContainer.innerHTML = `
-            <h2>Current Weather</h2>
-            <p><strong>Location:</strong> ${location}</p>
-            <p><strong>Temperature:</strong> ${temperature}</p>
-            <p><strong>Condition:</strong> ${condition}</p>
-        `;
-
-        // Fetch 7 day forecast data
-        const forecastResponse = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=49a45a443b2146b9ba705034240202&q=${city}&days=7&aqi=no&alerts=no`);
-        if (!forecastResponse.ok) {
-            throw new Error('Failed to fetch forecast data');
-        }
-        const forecastData = await forecastResponse.json();
-
-        // Display 7 day forecast
-        const forecastContainer = document.createElement('div');
-        forecastContainer.innerHTML = '<h2>7-Day Forecast</h2>';
-        forecastData.forecast.forecastday.forEach(day => {
-            const date = `<u>${day.date}</u>`;
-            const temperature = `${day.day.maxtemp_c}°C / ${day.day.mintemp_c}°C`;
-            const condition = day.day.condition.text;
-            forecastContainer.innerHTML += `
-                <div>
-                    <p><strong>Date:</strong> ${date}</p>
-                    <p><strong>Temperature:</strong> ${temperature}</p>
-                    <p><strong>Condition:</strong> ${condition}</p>
-                </div>
-            `;
-        });
-        weatherContainer.appendChild(forecastContainer);
-    } catch (error) {
-        console.error('Error fetching weather data:', error);
-        const weatherContainer = document.getElementById('weather-container');
-        weatherContainer.innerHTML = '<p>Failed to fetch weather data. Please try again later.</p>';
+function addToCart(productName, price) {
+    const existingItemIndex = cartItems.findIndex(item => item.name === productName);
+    if (existingItemIndex !== -1) {
+        cartItems[existingItemIndex].quantity++;
+    } else {
+        cartItems.push({ name: productName, price: price, quantity: 1 });
     }
+    displayCartPopup();
+    updateCartCount(); 
 }
 
-// Call fetchWeather function when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const citySelect = document.getElementById('city');
-    citySelect.addEventListener('change', () => {
-        const selectedCity = citySelect.value;
-        fetchWeather(selectedCity);
+function updateCartCount() {
+    const cartCountElement = document.querySelector('#cartCountPopup');
+    const cartButton = document.querySelector('.btnCart-popup');
+    const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+    cartCountElement.textContent = cartCount;
+    cartButton.textContent = `Cart (${cartCount})`;
+}
+
+function displayCartPopup() {
+    const cartElement = document.querySelector('#cartPopup');
+    const cartCountElement = document.querySelector('#cartCountPopup');
+    const totalPriceElement = document.getElementById('totalPricePopup');
+
+    cartElement.innerHTML = '';
+    let totalPrice = 0;
+
+    const cartTable = document.createElement('table');
+    cartTable.innerHTML = `
+        <tr>
+            <th>Fruit</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Price</th>
+        </tr>
+    `;
+
+    cartItems.forEach(item => {
+        const totalProductPrice = item.price * item.quantity;
+        totalPrice += totalProductPrice;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>
+                <input type="number" min="1" value="${item.quantity}" onchange="updateQuantity(this.value, '${item.name}', ${item.price})">
+            </td>
+            <td>$${item.price}</td>
+            <td>$${totalProductPrice}</td>
+        `;
+        cartTable.appendChild(tr);
     });
-    const defaultCity = citySelect.value;
-    fetchWeather(defaultCity);
+
+    cartElement.appendChild(cartTable);
+    cartCountElement.textContent = cartItems.length;
+    totalPriceElement.textContent = `Total Price: $${totalPrice}`;
+    document.querySelector('.popup').style.display = 'block';
+    document.querySelector('.popup-overlay').style.display = 'block';
+}
+
+function closePopup() {
+    document.querySelector('.popup').style.display = 'none';
+    document.querySelector('.popup-overlay').style.display = 'none';
+}
+
+function updateQuantity(newQuantity, productName, price) {
+    const itemIndex = cartItems.findIndex(item => item.name === productName);
+    if (itemIndex !== -1) {
+        cartItems[itemIndex].quantity = parseInt(newQuantity);
+    }
+    displayCartPopup();
+}
+
+async function submitOrder() {
+    const databaseUrl = 'https://rosesellingwebsite-default-rtdb.firebaseio.com/chatMsg.json';
+
+    const timestamp = new Date().toLocaleString();
+
+    const orderData = {
+        timestamp: timestamp,
+        items: {}
+    };
+
+    cartItems.forEach(item => {
+        orderData.items[item.name] = {
+            price: item.price,
+            quantity: item.quantity
+        };
+    });
+
+    try {
+        const response = await fetch(databaseUrl, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        cartItems = [];
+        displayCartPopup(); 
+        alert('Order submitted successfully!');
+    } catch (error) {
+        console.error('Error submitting order:', error);
+        alert('Failed to submit order. Please try again later.');
+    }   
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const addToCartButtons = document.querySelectorAll('.add-to-cart');
+  addToCartButtons.forEach(button => {
+      button.onclick = function() {
+          const productName = button.getAttribute('data-product');
+          const productPrice = parseFloat(button.getAttribute('data-price'));
+          addToCart(productName, productPrice);
+      };
+  });
+
+  document.querySelector('#submitPopup').onclick = submitOrder;
+  document.querySelector('#closePopup').onclick = closePopup;
 });
